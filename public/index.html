@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diet Control | Nourishment</title>
+    <!-- Google Fonts: Playfair Display for headings, Inter for body -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <main class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1 id="greeting">Good evening, Friend.</h1>
+            <p>Small, mindful choices add up. Here's your nourishment for today.</p>
+        </header>
+
+        <div class="swipe-container" id="swipeContainer">
+            <!-- Page 1: Profile -->
+            <div class="page">
+                <!-- Your Body Section -->
+                <section class="card body-card">
+                    <div class="card-header">
+                        <h2>Your body</h2>
+                        <button id="editBodyBtn" class="text-btn">Edit</button>
+                    </div>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <span class="label">HEIGHT</span>
+                            <div class="value"><span id="heightVal">170</span> <span class="unit">cm</span></div>
+                        </div>
+                        <div class="stat-box">
+                            <span class="label">WEIGHT</span>
+                            <div class="value"><span id="weightVal">65</span> <span class="unit">kg</span></div>
+                        </div>
+                        <div class="stat-box">
+                            <span class="label">AGE</span>
+                            <div class="value"><span id="ageVal">28</span> <span class="unit">yrs</span></div>
+                        </div>
+                        <div class="stat-box">
+                            <span class="label">SEX</span>
+                            <div class="value"><span id="sexVal">Female</span></div>
+                        </div>
+                    </div>
+
+                    <div class="bmi-box">
+                        <div class="bmi-header">
+                            <span class="label">Body Mass Index</span>
+                            <span class="status-label" id="bmiStatus">Balanced</span>
+                        </div>
+                        <div class="bmi-value">
+                            <span id="bmiVal">22.5</span> <span class="unit">BMI</span>
+                        </div>
+                        <div class="bmi-slider">
+                            <div class="slider-track">
+                                <div class="segment under"></div>
+                                <div class="segment normal"></div>
+                                <div class="segment over"></div>
+                                <div class="segment obese"></div>
+                            </div>
+                            <div class="slider-thumb" id="bmiThumb"></div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Page 2: Meals Entry -->
+            <div class="page">
+                <section class="card journal-card">
+                    <div class="card-header">
+                        <h2>Nourishment journal</h2>
+                        <button id="logMealBtn" class="btn-primary">+ Log meal</button>
+                    </div>
+                    
+                    <div class="empty-state" id="emptyJournal">
+                        <p class="empty-title">A fresh page awaits.</p>
+                        <p>Log your first meal to see your day take shape.</p>
+                    </div>
+
+                    <div class="log-list" id="logList">
+                        <!-- Logs will be injected here -->
+                    </div>
+                </section>
+            </div>
+
+            <!-- Page 3: Dashboard Overview -->
+            <div class="page">
+                <!-- Calories Remaining -->
+                <section class="card center-card">
+                    <div class="donut-container">
+                        <div class="donut-chart" id="calorieDonut">
+                            <div class="donut-inner">
+                                <span class="donut-value" id="caloriesEaten">0</span>
+                                <span class="donut-label">of <span id="caloriesTotal">2000</span> kcal</span>
+                                <span class="donut-status" id="caloriesLeft">2000 kcal left</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Today's Nourishment -->
+                <section class="card nourishment-card">
+                    <h2>Today's nourishment</h2>
+                    <p class="subtitle">Daily target based on your body data: <strong id="dailyTargetKcal">2000</strong> kcal</p>
+                    
+                    <div class="macro-bars">
+                        <div class="macro">
+                            <div class="macro-header">
+                                <span>Carbohydrates</span>
+                                <span id="carbsLabel">0 / 250g</span>
+                            </div>
+                            <div class="progress-bar"><div class="progress" id="carbsProgress"></div></div>
+                        </div>
+                        <div class="macro">
+                            <div class="macro-header">
+                                <span>Protein</span>
+                                <span id="proteinLabel">0 / 100g</span>
+                            </div>
+                            <div class="progress-bar"><div class="progress" id="proteinProgress"></div></div>
+                        </div>
+                        <div class="macro">
+                            <div class="macro-header">
+                                <span>Fat</span>
+                                <span id="fatLabel">0 / 65g</span>
+                            </div>
+                            <div class="progress-bar"><div class="progress" id="fatProgress"></div></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Gentle Guidance -->
+                <section class="card guidance-card">
+                    <h2>Gentle guidance</h2>
+                    <ul class="guidance-list" id="guidanceList">
+                        <li>
+                            <span class="number">1</span>
+                            <p>Loading your guidance...</p>
+                        </li>
+                    </ul>
+                </section>
+            </div>
+        </div>
+
+        <!-- Indicators -->
+        <div class="page-indicators" id="pageIndicators">
+            <span class="dot active"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+        </div>
+
+    </main>
+
+    <!-- Modal for Body Edit -->
+    <div class="modal-overlay" id="bodyModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Edit Body Data</h2>
+                <button class="close-btn" id="closeBodyModal">&times;</button>
+            </div>
+            <form id="bodyForm">
+                <div class="form-group">
+                    <label>Height (cm)</label>
+                    <input type="number" id="inputHeight" required>
+                </div>
+                <div class="form-group">
+                    <label>Weight (kg)</label>
+                    <input type="number" id="inputWeight" required>
+                </div>
+                <div class="form-group">
+                    <label>Age (yrs)</label>
+                    <input type="number" id="inputAge" required>
+                </div>
+                <div class="form-group">
+                    <label>Sex</label>
+                    <select id="inputSex">
+                        <option value="Female">Female</option>
+                        <option value="Male">Male</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-primary full-width">Save Changes</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for Meal Log -->
+    <div class="modal-overlay" id="mealModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Log a Meal</h2>
+                <button class="close-btn" id="closeMealModal">&times;</button>
+            </div>
+            <form id="mealForm">
+                <div class="form-group">
+                    <label>Food Name</label>
+                    <input type="text" id="foodName" required placeholder="e.g. Apple" list="foodOptions">
+                    <datalist id="foodOptions"></datalist>
+                </div>
+                <div class="form-group">
+                    <label>Amount (grams)</label>
+                    <input type="number" id="foodAmount" placeholder="100" value="100" min="0" step="any">
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Calories (kcal)</label>
+                        <input type="number" id="foodCalories" required min="0" step="any">
+                    </div>
+                    <div class="form-group">
+                        <label>Carbs (g)</label>
+                        <input type="number" id="foodCarbs" required min="0" step="any">
+                    </div>
+                    <div class="form-group">
+                        <label>Protein (g)</label>
+                        <input type="number" id="foodProtein" required min="0" step="any">
+                    </div>
+                    <div class="form-group">
+                        <label>Fat (g)</label>
+                        <input type="number" id="foodFat" required min="0" step="any">
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary full-width">Add to Journal</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

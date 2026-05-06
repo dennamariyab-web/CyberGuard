@@ -27,11 +27,13 @@ document.addEventListener('DOMContentLoaded', () => {
         carbsLabel: document.getElementById('carbsLabel'),
         carbsProgress: document.getElementById('carbsProgress'),
         proteinLabel: document.getElementById('proteinLabel'),
+        proteinLabel: document.getElementById('proteinLabel'),
         proteinProgress: document.getElementById('proteinProgress'),
         fatLabel: document.getElementById('fatLabel'),
         fatProgress: document.getElementById('fatProgress'),
         logList: document.getElementById('logList'),
         emptyJournal: document.getElementById('emptyJournal'),
+        waterVal: document.getElementById('waterVal'),
         
         // Modals
         bodyModal: document.getElementById('bodyModal'),
@@ -66,27 +68,69 @@ document.addEventListener('DOMContentLoaded', () => {
         "Almonds": { cal: 579, carb: 21.6, pro: 21.1, fat: 49.9 },
         "Sweet Potato": { cal: 86, carb: 20.1, pro: 1.6, fat: 0.1 },
         "Olive Oil": { cal: 884, carb: 0, pro: 0, fat: 100 },
-        "Tofu": { cal: 76, carb: 1.9, pro: 8, fat: 4.8 }
+        "Tofu": { cal: 76, carb: 1.9, pro: 8, fat: 4.8 },
+        "Spinach": { cal: 23, carb: 3.6, pro: 2.9, fat: 0.4 },
+        "Kale": { cal: 49, carb: 8.8, pro: 4.3, fat: 0.9 },
+        "Lettuce": { cal: 15, carb: 2.9, pro: 1.4, fat: 0.2 },
+        "Carrot": { cal: 41, carb: 9.6, pro: 0.9, fat: 0.2 },
+        "Orange": { cal: 47, carb: 11.8, pro: 0.9, fat: 0.1 },
+        "Grape": { cal: 69, carb: 18.1, pro: 0.7, fat: 0.2 },
+        "Broccoli": { cal: 34, carb: 6.6, pro: 2.8, fat: 0.4 },
+        "Strawberry": { cal: 32, carb: 7.7, pro: 0.7, fat: 0.3 },
+        "Watermelon": { cal: 30, carb: 7.6, pro: 0.6, fat: 0.2 },
+        "Cabbage": { cal: 25, carb: 5.8, pro: 1.3, fat: 0.1 },
+        "Beef": { cal: 250, carb: 0, pro: 26, fat: 15 },
+        "Pork": { cal: 242, carb: 0, pro: 27, fat: 14 },
+        "Beetroot": { cal: 43, carb: 10, pro: 1.6, fat: 0.2 },
+        "Legume": { cal: 116, carb: 21, pro: 8, fat: 0.4 },
+        "Fish": { cal: 206, carb: 0, pro: 22, fat: 12 }
     };
 
     // Populate datalist
     els.foodOptions.innerHTML = Object.keys(foodDB).map(food => `<option value="${food}">`).join('');
 
-    function autoFillFood() {
-        const name = els.foodName.value;
+    async function fetchFoodData(query) {
+        try {
+            const res = await fetch(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=1`);
+            const data = await res.json();
+            if (data.products && data.products.length > 0) {
+                const nut = data.products[0].nutriments;
+                return {
+                    cal: nut['energy-kcal_100g'] || nut['energy_100g'] / 4.184 || 0,
+                    carb: nut['carbohydrates_100g'] || 0,
+                    pro: nut['proteins_100g'] || 0,
+                    fat: nut['fat_100g'] || 0
+                };
+            }
+        } catch (e) {
+            console.error("API fetch failed", e);
+        }
+        return null;
+    }
+
+    async function autoFillFood() {
+        const name = els.foodName.value.trim();
+        if (!name) return;
         const amount = Number(els.foodAmount.value) || 100;
         
-        if (foodDB[name]) {
+        let match = foodDB[name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()] || foodDB[name];
+        if (!match) {
+            els.foodName.style.opacity = '0.5';
+            match = await fetchFoodData(name);
+            els.foodName.style.opacity = '1';
+        }
+
+        if (match) {
             const multiplier = amount / 100;
-            els.foodCalories.value = Math.round(foodDB[name].cal * multiplier);
-            els.foodCarbs.value = (foodDB[name].carb * multiplier).toFixed(1);
-            els.foodProtein.value = (foodDB[name].pro * multiplier).toFixed(1);
-            els.foodFat.value = (foodDB[name].fat * multiplier).toFixed(1);
+            els.foodCalories.value = Math.round(match.cal * multiplier);
+            els.foodCarbs.value = (match.carb * multiplier).toFixed(1);
+            els.foodProtein.value = (match.pro * multiplier).toFixed(1);
+            els.foodFat.value = (match.fat * multiplier).toFixed(1);
         }
     }
 
-    els.foodName.addEventListener('input', autoFillFood);
-    els.foodAmount.addEventListener('input', autoFillFood);
+    els.foodName.addEventListener('blur', autoFillFood);
+    els.foodAmount.addEventListener('blur', autoFillFood);
 
     // Greeting Time
     const hour = new Date().getHours();
@@ -103,6 +147,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const index = Math.round(swipeContainer.scrollLeft / swipeContainer.offsetWidth);
             dots.forEach((dot, i) => {
                 dot.classList.toggle('active', i === index);
+            });
+        });
+        dots.forEach((dot, i) => {
+            dot.addEventListener('click', () => {
+                swipeContainer.scrollTo({
+                    left: i * swipeContainer.offsetWidth,
+                    behavior: 'smooth'
+                });
             });
         });
     }
@@ -140,14 +192,19 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateUI() {
         if (!user.height) {
             // No user data yet
-            return;
-        }
-
-        // Body Stats
-        els.heightVal.textContent = user.height;
-        els.weightVal.textContent = user.weight;
-        els.ageVal.textContent = user.age;
-        els.sexVal.textContent = user.sex;
+            els.heightVal.textContent = '-';
+            els.weightVal.textContent = '-';
+            els.ageVal.textContent = '-';
+            els.sexVal.textContent = '-';
+            els.bmiVal.textContent = '-';
+            els.bmiStatus.textContent = 'Setup Profile';
+            if(els.waterVal) els.waterVal.textContent = '-';
+        } else {
+            // Body Stats
+            els.heightVal.textContent = user.height;
+            els.weightVal.textContent = user.weight;
+            els.ageVal.textContent = user.age;
+            els.sexVal.textContent = user.sex;
 
         // BMI Calculation
         const heightM = user.height / 100;
@@ -180,6 +237,13 @@ document.addEventListener('DOMContentLoaded', () => {
         els.bmiStatus.style.color = statusColor;
         els.bmiThumb.style.left = `${position}%`;
 
+        // Water Goal calculation (based on BMI & weight)
+        let waterLiters = (user.weight * 35) / 1000;
+        if (bmi >= 25) {
+            waterLiters += 0.5; // Adjust for higher BMI
+        }
+        if(els.waterVal) els.waterVal.textContent = waterLiters.toFixed(1);
+
         // Calorie Requirements (Mifflin-St Jeor)
         let bmr = (10 * user.weight) + (6.25 * user.height) - (5 * user.age);
         bmr += (user.sex === 'Male') ? 5 : -161;
@@ -192,6 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         els.dailyTargetKcal.textContent = targets.calories;
         els.caloriesTotal.textContent = targets.calories;
+        }
 
         // Calculate Intake
         let eaten = { calories: 0, carbs: 0, protein: 0, fat: 0 };
@@ -219,8 +284,8 @@ document.addEventListener('DOMContentLoaded', () => {
         els.calorieDonut.style.background = `conic-gradient(${strokeColor} ${deg}deg, var(--border-color) ${deg}deg)`;
 
         // Update Macro Bars
-        const updateBar = (eatenVal, targetVal, labelEl, progressEl) => {
-            labelEl.textContent = `${eatenVal} / ${targetVal}g`;
+        const updateBar = (eatenVal, targetVal, labelEl, progressEl, suffix="g") => {
+            labelEl.textContent = `${eatenVal} / ${targetVal}${suffix}`;
             const pct = Math.min((eatenVal / targetVal) * 100, 100);
             progressEl.style.width = `${pct}%`;
             if (eatenVal > targetVal) progressEl.style.backgroundColor = "#F87171";
@@ -313,10 +378,10 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const newLog = {
             name: document.getElementById('foodName').value,
-            calories: Number(document.getElementById('foodCalories').value),
-            carbs: Number(document.getElementById('foodCarbs').value),
-            protein: Number(document.getElementById('foodProtein').value),
-            fat: Number(document.getElementById('foodFat').value)
+            calories: Number(document.getElementById('foodCalories').value) || 0,
+            carbs: Number(document.getElementById('foodCarbs').value) || 0,
+            protein: Number(document.getElementById('foodProtein').value) || 0,
+            fat: Number(document.getElementById('foodFat').value) || 0
         };
 
         const res = await fetch('/api/logs', {

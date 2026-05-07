@@ -175,12 +175,16 @@ document.addEventListener('DOMContentLoaded', () => {
     els.closeMealModal.onclick = () => closeModal(els.mealModal);
 
     // Fetch Initial Data
-    async function init() {
+    function init() {
         try {
-            const userRes = await fetch('/api/user');
-            user = await userRes.json();
-            const logsRes = await fetch('/api/logs');
-            logs = await logsRes.json();
+            const storedUser = localStorage.getItem('diet_user');
+            if (storedUser) {
+                user = JSON.parse(storedUser);
+            }
+            const storedLogs = localStorage.getItem('diet_logs');
+            if (storedLogs) {
+                logs = JSON.parse(storedLogs);
+            }
             
             updateUI();
         } catch (err) {
@@ -355,7 +359,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Submit Forms
-    els.bodyForm.addEventListener('submit', async (e) => {
+    els.bodyForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const newData = {
             height: Number(document.getElementById('inputHeight').value),
@@ -364,19 +368,18 @@ document.addEventListener('DOMContentLoaded', () => {
             sex: document.getElementById('inputSex').value
         };
 
-        const res = await fetch('/api/user', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(newData)
-        });
-        user = await res.json();
+        user = { ...user, ...newData };
+        localStorage.setItem('diet_user', JSON.stringify(user));
+        
         updateUI();
         closeModal(els.bodyModal);
     });
 
-    els.mealForm.addEventListener('submit', async (e) => {
+    els.mealForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const newLog = {
+            id: Date.now(),
+            date: new Date().toISOString(),
             name: document.getElementById('foodName').value,
             calories: Number(document.getElementById('foodCalories').value) || 0,
             carbs: Number(document.getElementById('foodCarbs').value) || 0,
@@ -384,23 +387,19 @@ document.addEventListener('DOMContentLoaded', () => {
             fat: Number(document.getElementById('foodFat').value) || 0
         };
 
-        const res = await fetch('/api/logs', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(newLog)
-        });
-        const log = await res.json();
-        logs.push(log);
+        logs.push(newLog);
+        localStorage.setItem('diet_logs', JSON.stringify(logs));
+        
         updateUI();
         els.mealForm.reset();
         closeModal(els.mealModal);
     });
 
-    window.deleteLog = async function(id) {
+    window.deleteLog = function(id) {
         if (!confirm('Remove this food item?')) return;
         try {
-            await fetch(`/api/logs/${id}`, { method: 'DELETE' });
             logs = logs.filter(l => l.id !== id);
+            localStorage.setItem('diet_logs', JSON.stringify(logs));
             updateUI();
         } catch (err) {
             console.error("Failed to delete log", err);

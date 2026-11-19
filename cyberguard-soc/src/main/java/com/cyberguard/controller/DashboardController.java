@@ -25,6 +25,7 @@ public class DashboardController {
     private final Admin currentAdmin;
 
     private final ObservableList<SecurityEvent> eventsMasterList = FXCollections.observableArrayList();
+    private final ObservableList<SecurityEvent> failedEventsMasterList = FXCollections.observableArrayList();
     private final ObservableList<Alert> alertsMasterList = FXCollections.observableArrayList();
 
     public DashboardController(DashboardView view, Admin currentAdmin) {
@@ -48,14 +49,21 @@ public class DashboardController {
 
         Platform.runLater(() -> {
             eventsMasterList.setAll(events);
+
+            List<SecurityEvent> failedOnly = events.stream()
+                    .filter(e -> "FAILED".equalsIgnoreCase(e.getStatus()))
+                    .collect(Collectors.toList());
+            failedEventsMasterList.setAll(failedOnly);
+
             alertsMasterList.setAll(alerts);
 
             // Compute statistics
             DashboardStats stats = calculateStats(events, alerts);
             view.updateStats(stats);
 
-            // Update tables and charts
+            // Update all tables and charts
             view.updateEventsTable(eventsMasterList);
+            view.updateFailedLoginsTable(failedEventsMasterList);
             view.updateAlertsTable(alertsMasterList);
             view.updateCharts(events, alerts);
         });
@@ -120,6 +128,25 @@ public class DashboardController {
                 .collect(Collectors.toList());
 
         view.updateEventsTable(FXCollections.observableArrayList(filtered));
+    }
+
+    /**
+     * Filters failed logins by query string.
+     */
+    public void filterFailedLogins(String query) {
+        List<SecurityEvent> filtered = failedEventsMasterList.stream()
+                .filter(e -> {
+                    if (query == null || query.trim().isEmpty()) {
+                        return true;
+                    }
+                    String q = query.trim().toLowerCase();
+                    return e.getUsername().toLowerCase().contains(q) ||
+                           e.getIpAddress().toLowerCase().contains(q) ||
+                           e.getEventType().toLowerCase().contains(q);
+                })
+                .collect(Collectors.toList());
+
+        view.updateFailedLoginsTable(FXCollections.observableArrayList(filtered));
     }
 
     /**

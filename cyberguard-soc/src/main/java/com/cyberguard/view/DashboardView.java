@@ -44,7 +44,9 @@ public class DashboardView {
     private Label suspiciousActivitiesVal;
 
     // Tables
-    private TableView<SecurityEvent> eventsTable;
+    private TableView<SecurityEvent> overviewEventsTable;
+    private TableView<SecurityEvent> fullEventsTable;
+    private TableView<SecurityEvent> failedLoginsTable;
     private TableView<Alert> alertsTable;
 
     // Navigation Stack and Active View Container
@@ -196,13 +198,39 @@ public class DashboardView {
         // Nav click handlers
         List<Button> allNavButtons = List.of(navDash, navEvents, navFailed, navThreats, navAlerts, navReports, navSettings);
 
-        navDash.setOnAction(e -> { setActiveNav(navDash, allNavButtons); showPage(dashboardOverviewPane); });
-        navEvents.setOnAction(e -> { setActiveNav(navEvents, allNavButtons); showPage(eventsPane); });
-        navFailed.setOnAction(e -> { setActiveNav(navFailed, allNavButtons); showPage(failedLoginsPane); controller.filterEvents("", "FAILED"); });
-        navThreats.setOnAction(e -> { setActiveNav(navThreats, allNavButtons); showPage(threatDetectionPane); });
-        navAlerts.setOnAction(e -> { setActiveNav(navAlerts, allNavButtons); showPage(alertsManagementPane); });
-        navReports.setOnAction(e -> { setActiveNav(navReports, allNavButtons); showPage(reportsPane); });
-        navSettings.setOnAction(e -> { setActiveNav(navSettings, allNavButtons); showPage(settingsPane); });
+        navDash.setOnAction(e -> { 
+            setActiveNav(navDash, allNavButtons); 
+            showPage(dashboardOverviewPane); 
+            controller.refreshAllData();
+        });
+        navEvents.setOnAction(e -> { 
+            setActiveNav(navEvents, allNavButtons); 
+            showPage(eventsPane); 
+            controller.filterEvents("", "ALL"); 
+        });
+        navFailed.setOnAction(e -> { 
+            setActiveNav(navFailed, allNavButtons); 
+            showPage(failedLoginsPane); 
+            controller.filterFailedLogins(""); 
+        });
+        navThreats.setOnAction(e -> { 
+            setActiveNav(navThreats, allNavButtons); 
+            showPage(threatDetectionPane); 
+        });
+        navAlerts.setOnAction(e -> { 
+            setActiveNav(navAlerts, allNavButtons); 
+            showPage(alertsManagementPane); 
+            controller.refreshAllData();
+        });
+        navReports.setOnAction(e -> { 
+            setActiveNav(navReports, allNavButtons); 
+            showPage(reportsPane); 
+            controller.refreshAllData();
+        });
+        navSettings.setOnAction(e -> { 
+            setActiveNav(navSettings, allNavButtons); 
+            showPage(settingsPane); 
+        });
 
         sidebar.getChildren().addAll(
                 cat1, navDash, navEvents, navFailed, navThreats, navAlerts,
@@ -321,9 +349,9 @@ public class DashboardView {
         Label tableTitle = new Label("Live Authentication & Security Events Log");
         tableTitle.getStyleClass().add("card-heading");
 
-        eventsTable = buildSecurityEventsTable();
-        eventsTable.setPrefHeight(260);
-        tableCard.getChildren().addAll(tableTitle, eventsTable);
+        overviewEventsTable = buildSecurityEventsTable();
+        overviewEventsTable.setPrefHeight(260);
+        tableCard.getChildren().addAll(tableTitle, overviewEventsTable);
 
         pane.getChildren().addAll(headBar, statsRow, visualRow, tableCard);
         return pane;
@@ -350,19 +378,15 @@ public class DashboardView {
         HBox row = new HBox(16);
         row.setFillHeight(true);
 
-        // 1. Total Attempts
         totalAttemptsVal = new Label("0");
         VBox cardTotal = buildStatCard("TOTAL LOGIN ATTEMPTS", totalAttemptsVal, "Monitored inbound requests", "stat-card-total");
 
-        // 2. Successful Logins
         successfulLoginsVal = new Label("0");
         VBox cardSuccess = buildStatCard("SUCCESSFUL LOGINS", successfulLoginsVal, "Authorized authentications", "stat-card-success");
 
-        // 3. Failed Logins
         failedLoginsVal = new Label("0");
         VBox cardFailed = buildStatCard("FAILED LOGINS", failedLoginsVal, "Password/credential rejections", "stat-card-failed");
 
-        // 4. Suspicious Activities
         suspiciousActivitiesVal = new Label("0");
         VBox cardSuspicious = buildStatCard("SUSPICIOUS ACTIVITIES", suspiciousActivitiesVal, "Potential threat alerts", "stat-card-suspicious");
 
@@ -427,7 +451,7 @@ public class DashboardView {
 
         toolbar.getChildren().addAll(searchField, new Label("Status:"), statusFilter, filterBtn, refreshBtn);
 
-        TableView<SecurityEvent> fullEventsTable = buildSecurityEventsTable();
+        fullEventsTable = buildSecurityEventsTable();
         VBox.setVgrow(fullEventsTable, Priority.ALWAYS);
 
         pane.getChildren().addAll(pageTitle, toolbar, fullEventsTable);
@@ -503,10 +527,26 @@ public class DashboardView {
         Label sub = new Label("Audit log isolating authentication failures subject to threat detection rules.");
         sub.setStyle("-fx-text-fill: #94a3b8; -fx-font-size: 13px;");
 
-        TableView<SecurityEvent> failedTable = buildSecurityEventsTable();
-        VBox.setVgrow(failedTable, Priority.ALWAYS);
+        // Filter Bar for Failed Logins
+        HBox toolbar = new HBox(12);
+        toolbar.setAlignment(Pos.CENTER_LEFT);
 
-        pane.getChildren().addAll(title, sub, failedTable);
+        TextField searchFailed = new TextField();
+        searchFailed.setPromptText("Filter failed logins by user or IP...");
+        searchFailed.getStyleClass().add("custom-text-field");
+        searchFailed.setPrefWidth(300);
+        searchFailed.textProperty().addListener((obs, oldVal, newVal) -> controller.filterFailedLogins(newVal));
+
+        Button refreshBtn = new Button("Refresh");
+        refreshBtn.getStyleClass().add("btn-action-sm");
+        refreshBtn.setOnAction(e -> controller.refreshAllData());
+
+        toolbar.getChildren().addAll(searchFailed, refreshBtn);
+
+        failedLoginsTable = buildSecurityEventsTable();
+        VBox.setVgrow(failedLoginsTable, Priority.ALWAYS);
+
+        pane.getChildren().addAll(title, sub, toolbar, failedLoginsTable);
         return pane;
     }
 
@@ -792,8 +832,17 @@ public class DashboardView {
     }
 
     public void updateEventsTable(ObservableList<SecurityEvent> events) {
-        if (eventsTable != null) {
-            eventsTable.setItems(events);
+        if (overviewEventsTable != null) {
+            overviewEventsTable.setItems(events);
+        }
+        if (fullEventsTable != null) {
+            fullEventsTable.setItems(events);
+        }
+    }
+
+    public void updateFailedLoginsTable(ObservableList<SecurityEvent> failedEvents) {
+        if (failedLoginsTable != null) {
+            failedLoginsTable.setItems(failedEvents);
         }
     }
 

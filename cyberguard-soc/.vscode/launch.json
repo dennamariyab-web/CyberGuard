@@ -1,0 +1,13 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Launch CyberGuard SOC",
+            "request": "launch",
+            "mainClass": "com.cyberguard.App",
+            "projectName": "cyberguard-soc",
+            "vmArgs": "--module-path \"${workspaceFolder}/target/libs\" --add-modules javafx.controls,javafx.fxml,javafx.graphics,javafx.base"
+        }
+    ]
+}

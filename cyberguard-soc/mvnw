@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -e
+
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+MAVEN_VERSION="3.9.6"
+MAVEN_DIR="$DIR/.mvn/apache-maven-$MAVEN_VERSION"
+MAVEN_CMD="$MAVEN_DIR/bin/mvn"
+
+if [ -f "$MAVEN_CMD" ]; then
+    exec "$MAVEN_CMD" "$@"
+fi
+
+echo "[CyberGuard Maven Wrapper] Downloading Apache Maven $MAVEN_VERSION..."
+MAVEN_ZIP="$DIR/.mvn/apache-maven-$MAVEN_VERSION-bin.zip"
+MAVEN_URL="https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/$MAVEN_VERSION/apache-maven-$MAVEN_VERSION-bin.zip"
+
+curl -fsSL -o "$MAVEN_ZIP" "$MAVEN_URL"
+unzip -q "$MAVEN_ZIP" -d "$DIR/.mvn"
+rm -f "$MAVEN_ZIP"
+chmod +x "$MAVEN_CMD"
+
+echo "[CyberGuard Maven Wrapper] Maven $MAVEN_VERSION ready."
+exec "$MAVEN_CMD" "$@"

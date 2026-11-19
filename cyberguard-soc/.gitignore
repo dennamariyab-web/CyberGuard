@@ -1,0 +1,19 @@
+# Maven target build artifacts
+target/
+*.class
+
+# Maven wrapper downloaded binaries
+.mvn/apache-maven-*/
+.mvn/*.zip
+
+# IDE & Editor files
+.idea/
+*.iml
+*.iws
+*.ipr
+.settings/
+.project
+.classpath
+
+# Logs & temp
+*.log

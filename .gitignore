@@ -1,2 +1,7 @@
 node_modules/
 data.json
+target/
+*.class
+.mvn/apache-maven-*/
+.mvn/*.zip
+*.log
